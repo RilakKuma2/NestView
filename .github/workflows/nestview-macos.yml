@@ -1,0 +1,9 @@
+name: NestView macOS
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew install qtbase qttools qtsvg qtimageformats libarchive cmake ninja
+      - run: ./scripts/build-macos.sh

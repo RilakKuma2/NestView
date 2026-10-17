@@ -1,0 +1,62 @@
+name: NestView Windows and Linux
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ qt6-base-dev qt6-svg-dev qt6-tools-dev qt6-tools-dev-tools qt6-image-formats-plugins qt6-wayland libarchive-dev libexiv2-dev libraw-dev libx11-dev desktop-file-utils
+      - name: Build, test and package
+        run: bash scripts/build-linux.sh
+      - name: Verify installed package
+        run: |
+          sudo apt-get install -y ./release/linux/NestView-Linux-x86_64.deb
+          QT_QPA_PLATFORM=offscreen nestview --version
+          QT_QPA_PLATFORM=offscreen nestview --smoke-test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NestView-Linux-x86_64
+          path: release/linux/*.deb
+          if-no-files-found: error
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - run: git config --global core.autocrlf input
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-python
+            mingw-w64-ucrt-x86_64-qt6-base
+            mingw-w64-ucrt-x86_64-qt6-svg
+            mingw-w64-ucrt-x86_64-qt6-tools
+            mingw-w64-ucrt-x86_64-qt6-imageformats
+            mingw-w64-ucrt-x86_64-exiv2
+            mingw-w64-ucrt-x86_64-libraw
+            mingw-w64-ucrt-x86_64-libarchive
+      - name: Build, test and package
+        shell: msys2 {0}
+        run: bash scripts/build-windows.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NestView-Windows-x86_64
+          path: release/windows/*.zip
+          if-no-files-found: error

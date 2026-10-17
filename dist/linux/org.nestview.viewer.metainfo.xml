@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.nestview.viewer</id>
+  <name>NestView</name>
+  <summary>Browse photos, galleries and comic archives</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <description><p>NestView is a Qt image viewer based on qView, with folder galleries, filmstrips, reading modes, EXIF information and archive browsing.</p></description>
+  <launchable type="desktop-id">org.nestview.viewer.desktop</launchable>
+  <url type="homepage">https://github.com/RilakKuma2/NestView</url>
+  <provides><binary>nestview</binary></provides>
+  <content_rating type="oars-1.1"/>
+</component>
