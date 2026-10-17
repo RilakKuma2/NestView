@@ -12,7 +12,7 @@
 #include <QDir>
 #include <QUrl>
 #include <QSettings>
-#include <QCollator>
+#include "nestcollation.h"
 #include <QtConcurrent/QtConcurrentRun>
 #include <QIcon>
 #include <QGuiApplication>
@@ -385,7 +385,7 @@ void QVImageCore::updateFolderInfo(QString dirPath)
         }
     } else {
         // Every scan produces an unsorted list, even if the selected mode is unchanged.
-        QCollator collator;collator.setNumericMode(true);collator.setCaseSensitivity(Qt::CaseInsensitive);
+        NestNaturalCollator collator;
         auto compareNumber=[](qint64 a,qint64 b){return a<b?-1:(a>b?1:0);};
         std::sort(files.begin(),files.end(),[&](const CompatibleFile &a,const CompatibleFile &b){
             int comparison=0;
@@ -538,6 +538,7 @@ QColorSpace QVImageCore::detectDisplayColorSpace() const
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
     QWindow *window = static_cast<QWidget *>(parent())->window()->windowHandle();
+    if (!window) return {};
 
     QByteArray profileData;
 #  ifdef WIN32_LOADED

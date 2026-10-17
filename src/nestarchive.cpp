@@ -5,7 +5,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QImageReader>
-#include <QCollator>
+#include "nestcollation.h"
 #include <algorithm>
 bool NestMedia::isArchive(const QString &path) {
     return QStringList{"zip","cbz","rar","cbr","7z","cb7","tar"}.contains(QFileInfo(path).suffix().toLower());
@@ -64,7 +64,7 @@ NestMedia::ArchiveResult NestMedia::extract(const QString &path, const std::shar
     if (status != ARCHIVE_EOF && result.error.isEmpty()) fail(QString::fromUtf8(archive_error_string(a)));
     archive_read_free(a);
     if (!result.error.isEmpty()) return result;
-    QCollator collator; collator.setNumericMode(true); collator.setCaseSensitivity(Qt::CaseInsensitive);
+    NestNaturalCollator collator;
     std::sort(entries.begin(),entries.end(),[&](const Entry &a,const Entry &b){return collator.compare(a.logical,b.logical)<0;});
     for (int i=0; i<entries.size(); ++i) {
         if(isCancelled()){fail("압축파일 열기를 취소했습니다.");return result;}

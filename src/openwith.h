@@ -5,6 +5,7 @@
 #include <QDialog>
 #include <QAbstractButton>
 #include <QStandardItemModel>
+#include <memory>
 
 class OpenWith : public QObject
 {
@@ -20,6 +21,7 @@ public:
         QStringList categories; // this is only used on linux
         bool isDefault = false;
         void *winAssocHandler = nullptr;
+        std::shared_ptr<void> winAssocHandlerOwner;
     };
 
     static const QList<OpenWithItem> getOpenWithItems(const QString &filePath);

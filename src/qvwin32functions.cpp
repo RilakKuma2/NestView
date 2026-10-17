@@ -14,6 +14,7 @@
 #include <QVersionNumber>
 #include <QXmlStreamReader>
 #include <QWindow>
+#include <QScopeGuard>
 
 #include <QDebug>
 
@@ -25,7 +26,7 @@ QList<OpenWith::OpenWithItem> QVWin32Functions::getOpenWithItems(const QString &
     QString extension = "." + info.suffix();
 
     // Get default program first
-    WCHAR assocString[MAX_PATH];
+    WCHAR assocString[MAX_PATH] = {};
     DWORD assocStringSize = MAX_PATH;
     AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, qUtf16Printable(extension), L"open", assocString,
                       &assocStringSize);
@@ -35,28 +36,33 @@ QList<OpenWith::OpenWithItem> QVWin32Functions::getOpenWithItems(const QString &
     // Get the big list of recommended assochandlers for this file type
     IEnumAssocHandlers *assocHandlers = 0;
     if (!SUCCEEDED(SHAssocEnumHandlers(qUtf16Printable(extension), ASSOC_FILTER_RECOMMENDED,
-                                       &assocHandlers))) {
+                                       &assocHandlers)) || !assocHandlers) {
         qDebug() << "Failed to retrieve enum handlers";
         return listOfOpenWithItems;
     }
+    auto releaseEnumerator = qScopeGuard([&] { assocHandlers->Release(); });
 
     ULONG retrieved = 0;
     IAssocHandler *retrievedHandlers = 0; // this is an array with one element
     while (assocHandlers->Next(1, &retrievedHandlers, &retrieved) == S_OK) {
         IAssocHandler &assocHandler = retrievedHandlers[0];
+        WCHAR *uiName = nullptr, *name = nullptr, *icon = nullptr;
+        auto cleanup = qScopeGuard([&] {
+            CoTaskMemFree(uiName);
+            CoTaskMemFree(name);
+            CoTaskMemFree(icon);
+            assocHandler.Release();
+        });
 
         // Get UI name
-        WCHAR *uiName = 0;
         if (!SUCCEEDED(assocHandler.GetUIName(&uiName)))
             continue;
 
         // Get "name" (this is exec)
-        WCHAR *name = 0;
         if (!SUCCEEDED(assocHandler.GetName(&name)))
             continue;
 
         // Get icon path and index (index is not used in this program)
-        WCHAR *icon = 0;
         int iconIndex = 0;
         if (!SUCCEEDED(assocHandler.GetIconLocation(&icon, &iconIndex)))
             continue;
@@ -67,12 +73,14 @@ QList<OpenWith::OpenWithItem> QVWin32Functions::getOpenWithItems(const QString &
         openWithItem.exec = QString::fromWCharArray(name);
         openWithItem.isDefault = openWithItem.name == defaultProgramName;
         openWithItem.winAssocHandler = &assocHandler;
+        assocHandler.AddRef();
+        openWithItem.winAssocHandlerOwner = std::shared_ptr<void>(&assocHandler, [](void *value) { static_cast<IAssocHandler *>(value)->Release(); });
 
         QString iconLocation = QString::fromWCharArray(icon);
         bool isAppx = iconLocation.contains("ms-resource");
 
         // Don't include qView in open with menu
-        if (openWithItem.name == "qView")
+        if (openWithItem.name == "NestView" || openWithItem.name == "qView")
             continue;
 
         // Validity check
@@ -86,9 +94,9 @@ QList<OpenWith::OpenWithItem> QVWin32Functions::getOpenWithItems(const QString &
 
         // Set an icon
         if (isAppx) {
-            WCHAR realIconPath[MAX_PATH];
-            SHLoadIndirectString(icon, realIconPath, MAX_PATH, NULL);
-            openWithItem.icon = QIcon(QString::fromWCharArray(realIconPath));
+            WCHAR realIconPath[MAX_PATH] = {};
+            if (SUCCEEDED(SHLoadIndirectString(icon, realIconPath, MAX_PATH, NULL)))
+                openWithItem.icon = QIcon(QString::fromWCharArray(realIconPath));
         } else {
             QFileIconProvider iconProvider;
             openWithItem.icon = iconProvider.icon(QFileInfo(iconLocation));
@@ -112,6 +120,7 @@ void QVWin32Functions::openWithInvokeAssocHandler(const QString &filePath, void 
         qDebug() << "Failed to create IShellItem for " << filePath;
         return;
     }
+    auto releaseItem = qScopeGuard([&] { shellItem->Release(); });
 
     // Get IDataObject from that
     IDataObject *dataObject = 0;
@@ -120,6 +129,7 @@ void QVWin32Functions::openWithInvokeAssocHandler(const QString &filePath, void 
         qDebug() << "Failed to get IDataObject from IShellItem";
         return;
     }
+    auto releaseData = qScopeGuard([&] { dataObject->Release(); });
 
     // Cast passed IAssocHandler and invoke
     IAssocHandler *assocHandler = static_cast<IAssocHandler *>(winAssocHandler);
@@ -153,6 +163,7 @@ QStringList QVWin32Functions::getCommandLineArgs()
 QByteArray QVWin32Functions::getIccProfileForWindow(const QWindow *window)
 {
     QByteArray result;
+    if (!window) return result;
     const HWND hWnd = reinterpret_cast<HWND>(window->winId());
     const HMONITOR hMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
     if (hMonitor) {
@@ -171,7 +182,7 @@ QByteArray QVWin32Functions::getIccProfileForWindow(const QWindow *window)
                         file.close();
                     }
                 }
-                ReleaseDC(hWnd, hDC);
+                DeleteDC(hDC);
             }
         }
     }

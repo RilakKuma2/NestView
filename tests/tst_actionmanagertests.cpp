@@ -7,6 +7,7 @@
 #include "nestreadingview.h"
 #include "nestmedia.h"
 #include "nestupdate.h"
+#include "nestcollation.h"
 #include "nestthumbnails.h"
 #include "nestbackgroundactivity.h"
 #include <archive.h>
@@ -31,6 +32,7 @@ private slots:
     void testClonedActionsUntracked();
     void testDefaultShortcutProfile();
     void testPortableReleasePolicy();
+    void testNaturalSortInPosixLocale();
     void testNaturalNavigationAndReading();
     void testNativeDecoder();
     void testArchiveAndTraversal();
@@ -132,6 +134,16 @@ void ActionManagerTests::testNaturalNavigationAndReading() {
     shell->setMode(7);QCOMPARE(reader->readingMode(),7);
     shell->setMode(1);QVERIFY(!reader->isVisible());
     window.close();
+}
+void ActionManagerTests::testNaturalSortInPosixLocale() {
+    const auto previous = QLocale();
+    QLocale::setDefault(QLocale::c());
+    NestNaturalCollator collator;
+    const bool ordered = collator.compare("page2.png", "page10.png") < 0
+        && collator.compare("page0002.png", "page2.png") == 0
+        && collator.compare("page99999999999999999999999.png", "page100000000000000000000000.png") < 0;
+    QLocale::setDefault(previous);
+    QVERIFY(ordered);
 }
 void ActionManagerTests::testPortableReleasePolicy() {
     QVERIFY(NestUpdate::newerVersion("v0.10", "0.9"));
