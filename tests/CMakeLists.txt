@@ -113,12 +113,15 @@ if(QV_DISABLE_ONLINE_VERSION_CHECK)
 endif()
 
 # Add the test
-add_test(NAME ActionManagerTests COMMAND actionmanagertests)
+add_test(NAME ActionManagerTests COMMAND actionmanagertests -o -,txt)
+set_tests_properties(ActionManagerTests PROPERTIES TIMEOUT 180)
 if(APPLE AND NOT NEST_PORTABLE_UPDATER)
 add_test(NAME UpdateConfiguration COMMAND ${CMAKE_COMMAND}
     "-DAPP_PLIST=${CMAKE_BINARY_DIR}/Info.plist"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/verify-update-config.cmake")
 endif()
-if(NOT APPLE)
+if(WIN32)
+    set_tests_properties(ActionManagerTests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=windows")
+elseif(NOT APPLE)
     set_tests_properties(ActionManagerTests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
