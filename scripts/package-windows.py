@@ -58,9 +58,9 @@ with tempfile.TemporaryDirectory(prefix="NestView-") as temporary:
             if path.is_file():
                 bundle.write(path, path.relative_to(stage.parent))
     # Launch the deployed app with the development DLL directory removed.
-    clean_env = {**os.environ, "PATH": str(system), "QT_QPA_PLATFORM": "offscreen"}
+    clean_env = {**os.environ, "PATH": str(system), "QT_QPA_PLATFORM": "windows"}
     for key in list(clean_env):
         if key.startswith("QT_PLUGIN") or key == "QT_QPA_PLATFORM_PLUGIN_PATH":
             clean_env.pop(key)
-    subprocess.run([str(stage / executable.name), "--version"], env=clean_env, cwd=stage, check=True, timeout=30)
+    subprocess.run([str(stage / executable.name), "--smoke-test"], env=clean_env, cwd=stage, check=True, timeout=30)
     print(archive)
