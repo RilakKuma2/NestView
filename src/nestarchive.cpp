@@ -19,7 +19,12 @@ NestMedia::ArchiveResult NestMedia::extract(const QString &path, const std::shar
     auto a = archive_read_new();
     archive_read_support_filter_all(a); archive_read_support_format_all(a);
     auto fail = [&](const QString &message) { result.error = message; result.files.clear(); };
-    if (archive_read_open_filename(a, QFile::encodeName(path).constData(), 65536) != ARCHIVE_OK) {
+#ifdef Q_OS_WIN
+    const int openStatus = archive_read_open_filename_w(a, path.toStdWString().c_str(), 65536);
+#else
+    const int openStatus = archive_read_open_filename(a, QFile::encodeName(path).constData(), 65536);
+#endif
+    if (openStatus != ARCHIVE_OK) {
         fail(QString::fromUtf8(archive_error_string(a))); archive_read_free(a); return result;
     }
     struct Entry { QString logical; QString path; };

@@ -32,6 +32,7 @@ void checkRelease(bool userInitiated) {
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     request.setTransferTimeout(15000);
     auto reply = manager->get(request);
+    QTimer::singleShot(20000, reply, [reply] { if (!reply->isFinished()) reply->abort(); });
     QObject::connect(reply, &QNetworkReply::readyRead, reply, [reply] {
         if (reply->bytesAvailable() > 2 * 1024 * 1024) reply->abort();
     });

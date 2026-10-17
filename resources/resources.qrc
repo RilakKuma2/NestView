@@ -6,5 +6,6 @@
     </qresource>
     <qresource prefix="/images">
         <file>checkmark.png</file>
+        <file alias="nestview.svg">icons/nestview.svg</file>
     </qresource>
 </RCC>

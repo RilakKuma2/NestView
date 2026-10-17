@@ -116,7 +116,7 @@ QColorSpace NestMedia::displaySpace(const QWidget *widget) {
 #elif defined(X11_LOADED)
     profile = QVLinuxX11Functions::getIccProfileForWindow(widget->window()->windowHandle());
 #endif
-    return QColorSpace::fromIccProfile(profile);
+    return profile.isEmpty() ? QColorSpace() : QColorSpace::fromIccProfile(profile);
 }
 
 NestMedia::MetadataSnapshot NestMedia::inspect(const QString &path) {
@@ -132,8 +132,13 @@ NestMedia::MetadataSnapshot NestMedia::inspect(const QString &path) {
     QFile file(path);
     if (file.open(QIODevice::ReadOnly) && file.size() > 0 && file.size() <= maximumSourceBytes) {
         auto bytes = file.map(0, file.size());
+        if (!bytes) {
+            add("파일 경로", info.absoluteFilePath());
+            result.raw = result.text();
+            return result;
+        }
         try {
-            auto image = bytes ? Exiv2::ImageFactory::open(bytes, static_cast<size_t>(file.size())) : nullptr;
+            auto image = Exiv2::ImageFactory::open(bytes, static_cast<size_t>(file.size()));
             if (image.get()) {
                 image->readMetadata();
                 const auto &data = image->exifData();

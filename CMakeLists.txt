@@ -169,7 +169,7 @@ endif()
 # Add the executable and link Qt libraries
 set(PROJECT_RESOURCES resources/resources.qrc)
 if(WIN32)
-    set(ICON_PATH_RAW "${CMAKE_CURRENT_SOURCE_DIR}/dist/win/qView.ico")
+    set(ICON_PATH_RAW "${CMAKE_CURRENT_SOURCE_DIR}/dist/win/NestView.ico")
     string(REPLACE "\\" "\\\\" ICON_PATH "${ICON_PATH_RAW}")
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/dist/win/qView.rc.in"
@@ -211,7 +211,7 @@ if(WIN32)
     # Windows specific: link to Win32 libraries, set icon, and define as a Windows executable.
     if(NOT NO_WIN32)
         target_compile_definitions(${PROJECT_NAME} PRIVATE WIN32_LOADED)
-        set(PLATFORM_SPECIFIC_LIBS shell32 user32 ole32 shlwapi gdi32)
+        set(PLATFORM_SPECIFIC_LIBS shell32 user32 ole32 shlwapi gdi32 uuid)
         target_link_libraries(${PROJECT_NAME} PRIVATE ${PLATFORM_SPECIFIC_LIBS})
     endif()
 elseif(APPLE)

@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <shlobj.h>
+#include <shellapi.h>
 #include <objbase.h>
 #include <appmodel.h>
 #include <shlwapi.h>

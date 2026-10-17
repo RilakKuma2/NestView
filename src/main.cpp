@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(QString::number(VERSION));
     QVApplication app(argc, argv);
     QGuiApplication::setApplicationDisplayName("NestView");
+    QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/images/nestview.svg")));
 
     QCommandLineParser parser;
     parser.addHelpOption();

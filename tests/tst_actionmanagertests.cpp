@@ -155,13 +155,18 @@ void ActionManagerTests::testNativeDecoder() {
 }
 static bool makeArchive(const QString &path, const QStringList &names, const QByteArray &data) {
     auto a=archive_write_new();archive_write_set_format_zip(a);
-    if(archive_write_open_filename(a,QFile::encodeName(path))!=ARCHIVE_OK){archive_write_free(a);return false;}
+#ifdef Q_OS_WIN
+    const int openStatus = archive_write_open_filename_w(a, path.toStdWString().c_str());
+#else
+    const int openStatus = archive_write_open_filename(a,QFile::encodeName(path));
+#endif
+    if(openStatus!=ARCHIVE_OK){archive_write_free(a);return false;}
     for(auto name:names){auto e=archive_entry_new();archive_entry_set_pathname(e,name.toUtf8());archive_entry_set_filetype(e,AE_IFREG);archive_entry_set_perm(e,0644);archive_entry_set_size(e,data.size());archive_write_header(a,e);archive_write_data(a,data.constData(),data.size());archive_entry_free(e);}
     archive_write_close(a);archive_write_free(a);return true;
 }
 void ActionManagerTests::testArchiveAndTraversal() {
     QTemporaryDir dir;QImage image(40,60,QImage::Format_RGB32);image.fill(Qt::blue);QByteArray bytes;QBuffer buffer(&bytes);buffer.open(QIODevice::WriteOnly);QVERIFY(image.save(&buffer,"PNG"));
-    auto zip=dir.filePath("comic.cbz");QVERIFY(makeArchive(zip,{"chapter/page10.png","chapter/page2.png"},bytes));
+    auto zip=dir.filePath("만화 예제.cbz");QVERIFY(makeArchive(zip,{"chapter/page10.png","chapter/page2.png"},bytes));
     auto result=NestMedia::extract(zip);QVERIFY2(result.error.isEmpty(),qPrintable(result.error));QCOMPARE(result.files.size(),2);
     QVERIFY(result.files.first().endsWith("page2.png"));QVERIFY(!NestMedia::read(result.files.first()).isNull());
     auto evil=dir.filePath("bad.zip");QVERIFY(makeArchive(evil,{"../escaped.png"},bytes));auto rejected=NestMedia::extract(evil);QVERIFY(!rejected.error.isEmpty());QVERIFY(rejected.files.isEmpty());QVERIFY(!QFile::exists(dir.filePath("escaped.png")));
