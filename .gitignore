@@ -1,0 +1,67 @@
+.DS_Store
+old/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+*.p12
+*.pfx
+*.keychain-db
+.directory
+
+# C++ objects and libs
+
+*.slo
+*.lo
+*.o
+*.a
+*.la
+*.lai
+*.so
+*.dll
+*.dylib
+
+# Qt-es
+
+/.qmake.cache
+/.qmake.stash
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+Makefile*
+/build-*/
+
+# QtCreator
+
+*.autosave
+
+# QtCtreator Qml
+*.qmlproject.user
+*.qmlproject.user.*
+
+# QtCtreator CMake
+CMakeLists.txt.user*
+
+# Custom
+*.exe
+.vscode
+
+bin/*
+build/*
+
+*.qm
+.qm
+
+# NestView local outputs
+/release/
+/docs/reference/*.png
+/samples/
+*.log
+/dist/mac/*.iconset/
