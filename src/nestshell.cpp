@@ -1,4 +1,5 @@
 #include "nestshell.h"
+#include "nestplatform.h"
 #include "nestthumbnails.h"
 #include "nestfilmstrip.h"
 #include "nesticons.h"
@@ -97,9 +98,9 @@ NestShell::NestShell(MainWindow *window):QObject(window),w(window) {
     action(toolsMenu,"폴더 일괄 변환…","",[this]{exportImages(true);});
     action(toolsMenu,"이미지 경로 복사","Ctrl+Alt+Shift+C",[this]{QApplication::clipboard()->setText(w->getCurrentFileDetails().fileInfo.absoluteFilePath());});
     action(toolsMenu,"EXIF 복사","Ctrl+Shift+C",[this]{QApplication::clipboard()->setText(metaSnapshot.text());});
-    action(toolsMenu,"기본 편집기로 열기","Ctrl+E",[this]{auto p=w->getCurrentFileDetails().fileInfo.absoluteFilePath();if(!p.isEmpty())QProcess::startDetached("/usr/bin/open",{"-a","Preview",p});});
+    action(toolsMenu,"편집 프로그램으로 열기…","Ctrl+E",[this]{NestPlatform::editImage(w,w->getCurrentFileDetails().fileInfo.absoluteFilePath());});
     action(helpMenu,"단축키 안내","?",[this]{QMessageBox::information(w,"NestView 단축키",QStringLiteral("← / → · PgUp / PgDn   이전 / 다음\nHome / End   처음 / 마지막\n⌘ + PgUp / PgDn   10장 이동\nF   폴더 열기     [ / ]   이전 / 다음 폴더\nEnter   파일 탐색     Tab   메타데이터\n0   원본     1 / 9   창 맞춤     8   너비 맞춤\n7 / 6   두 장 좌→우 / 우→좌     5   웹툰\n2   읽기 방향 전환\n+ / −   확대 / 축소     F11 / ⌥Enter   전체 화면\nB   북마크     F2   이름 바꾸기\n⌘1…9   1…9초 슬라이드쇼     ⌘0   중지\n⌘⇧S   이미지 변환\n기존 뷰어 단축키는 Settings → Shortcuts에서 변경할 수 있습니다."));});
-    action(helpMenu,"NestView 정보","",[this]{QMessageBox::about(w,"NestView " + QCoreApplication::applicationVersion(), "macOS 이미지 뷰어 · qView 7 기반\nGPL-3.0 · qView 기여자 및 NestView 수정본\n사진 탐색과 감상을 위한 독립 이미지 뷰어입니다.\nHDR 출력·CLIP 전용 디코더는 아직 지원하지 않습니다.");});
+    action(helpMenu,"NestView 정보","",[this]{QMessageBox::about(w,"NestView " + QCoreApplication::applicationVersion(), "멀티플랫폼 이미지 뷰어 · qView 7 기반\nGPL-3.0 · qView 기여자 및 NestView 수정본\n사진 탐색과 감상을 위한 독립 이미지 뷰어입니다.\nHDR 출력·CLIP 전용 디코더는 아직 지원하지 않습니다.");});
     bottom->addAction(action(nullptr,"|‹","",[this]{w->firstFile();}));
     bottom->addAction(action(nullptr,"‹ 이전","",[this]{w->previousFile();}));
     bottom->addAction(action(nullptr,"다음 ›","",[this]{w->nextFile();}));

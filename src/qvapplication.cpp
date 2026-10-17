@@ -13,7 +13,7 @@
 
 QVApplication::QVApplication(int &argc, char **argv) : QApplication(argc, argv)
 {
-    setDesktopFileName("com.interversehq.qView.desktop");
+    setDesktopFileName("org.nestview.viewer");
 
     // Connections
     connect(&actionManager, &ActionManager::recentsMenuUpdated, this,

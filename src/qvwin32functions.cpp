@@ -1,11 +1,10 @@
 #include "qvwin32functions.h"
 
-#include "ShlObj_core.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "Objbase.h"
-#include "appmodel.h"
-#include "Shlwapi.h"
+#include <windows.h>
+#include <shlobj.h>
+#include <objbase.h>
+#include <appmodel.h>
+#include <shlwapi.h>
 
 #include <QFileInfo>
 #include <QFile>

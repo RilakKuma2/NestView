@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=NestView
+GenericName=Image Viewer
+Comment=Browse photos, galleries and comic archives
+Type=Application
+Exec=nestview %f
+Icon=org.nestview.viewer
+StartupNotify=true
+StartupWMClass=NestView
+Categories=Graphics;Viewer;Photography;
+Terminal=false
+MimeType=image/jpeg;image/png;image/gif;image/webp;image/bmp;image/tiff;image/svg+xml;image/avif;image/heic;image/heif;image/x-adobe-dng;image/x-canon-cr2;image/x-nikon-nef;application/zip;application/vnd.comicbook+zip;application/vnd.comicbook-rar;application/x-7z-compressed;

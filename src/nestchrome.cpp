@@ -1,4 +1,5 @@
 #include "nestshell.h"
+#include "nestplatform.h"
 #include "nesticons.h"
 #include "nestthumbnails.h"
 #include "nestfilmstrip.h"
@@ -59,12 +60,12 @@ void NestShell::buildChrome() {
     auto header=[this](const QString &text,std::function<void()> callback){auto button=new QToolButton(top);button->setFixedHeight(26);button->setIconSize(QSize(16,16));button->setText(text);button->setAccessibleName(text);connect(button,&QToolButton::clicked,this,[callback]{callback();});top->addWidget(button);return button;};
     auto file=header("",[]{});file->setIcon(nestIcon("folder"));file->setToolTip("파일과 폴더 열기");file->setAccessibleName("파일과 폴더 열기");file->setPopupMode(QToolButton::InstantPopup);
     auto fileMenu=new QMenu(file);fileMenu->setStyleSheet("QMenu{background:#282d30;color:#e0e6e3;border:1px solid #454d50;padding:6px;}QMenu::item{padding:7px 20px;}QMenu::item:selected{background:#435750;border-radius:4px;}");
-    auto menuEntry=[this,fileMenu](const QString &text,std::function<void()> callback){auto a=fileMenu->addAction(text);connect(a,&QAction::triggered,this,[callback]{callback();});};
+    auto menuEntry=[this,fileMenu](const QString &text,std::function<void()> callback){auto a=fileMenu->addAction(NestPlatform::shortcutLabel(text));connect(a,&QAction::triggered,this,[callback]{callback();});};
     menuEntry("파일 열기…                         ⌘O",[this]{QVApplication::pickFile(w);});
     menuEntry("폴더 열기…                            F",[this]{openFolder();});
     menuEntry("최근 파일",[this]{auto menu=qvApp->getActionManager().buildRecentsMenu(true,w);menu->setAttribute(Qt::WA_DeleteOnClose);connect(menu,&QMenu::triggered,this,[this](QAction*a){ActionManager::actionTriggered(a,w);});menu->popup(QCursor::pos());});
     fileMenu->addSeparator();
-    menuEntry("Finder에서 보기                    ⌘↵",[this]{w->openContainingFolder();});
+    menuEntry(NestPlatform::revealLabel()+"                    ⌘↵",[this]{w->openContainingFolder();});
     menuEntry("이미지 변환…                       ⌘⇧S",[this]{exportImages(false);});
     menuEntry("폴더 일괄 변환…",[this]{exportImages(true);});
     fileMenu->addSeparator();

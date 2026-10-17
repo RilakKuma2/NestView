@@ -18,3 +18,7 @@ NestView is a modified fork of qView 7.0, licensed under GPL-3.0.
   Contents/Resources/Licenses/Sparkle.txt.
 
 NestView's added line icons and mark were drawn in code for this project.
+
+- Windows/Linux: Exiv2 (GPL-2.0-or-later), https://exiv2.org/ .
+- Windows/Linux: LibRaw (LGPL-2.1 or CDDL-1.0), https://www.libraw.org/ .
+- Windows builds include the dependencies' license notices in the ZIP's `licenses` directory. Linux packages depend on the system-provided libraries and license notices.

@@ -1,5 +1,6 @@
 #include "qvlinuxx11functions.h"
 #include <QGuiApplication>
+#include <climits>
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #  include <QX11Info>
 #endif
@@ -14,8 +15,10 @@ Display *getDisplay()
         return QX11Info::display();
     return nullptr;
 #else
+#if QT_CONFIG(xcb)
     if (const auto x11App = qGuiApp->nativeInterface<QNativeInterface::QX11Application>())
         return x11App->display();
+#endif
     return nullptr;
 #endif
 }

@@ -1,4 +1,5 @@
 #include "nestsettings.h"
+#include "nestplatform.h"
 #include "nestswitch.h"
 #include "qvapplication.h"
 #include <QtWidgets>
@@ -18,7 +19,13 @@ void showNestSettings(QWidget *parent) {
     auto general=page("일반","일반 설정");toggle(general,"ESC키로 창 닫기","nest/escapeCloses",false);toggle(general,"파일 삭제 시 한 번 더 확인하기","options/askdelete",true);toggle(general,"최근 열어본 파일 기억하기","options/saverecents",true);toggle(general,"마지막 창을 닫으면 프로그램 종료","options/quitonlastwindow",false);toggle(general,"마지막 이미지에서 처음으로 돌아가기","options/loopfoldersenabled",true);general->addStretch();
     auto view=page("보기","보기 설정");select(view,"이미지 열 때 창 크기", "options/windowresizemode",{"변경 안함","처음 열 때 맞춤","항상 맞춤"},0);select(view,"제목 표시줄 정보","options/titlebarmode",{"앱 이름","파일 이름","파일 순서 + 이름","파일 정보 모두"},1);toggle(view,"작은 이미지도 창에 맞춰 확대","options/pastactualsizeenabled",true);toggle(view,"전체 화면에서 파일 정보 표시","options/fullscreendetails",false);auto bg=new QPushButton("배경 색상…",dialog);view->addWidget(bg);QObject::connect(bg,&QPushButton::clicked,dialog,[dialog]{auto c=QColorDialog::getColor(QColor(QSettings().value("options/bgcolor","#202020").toString()),dialog);if(c.isValid()){QSettings().setValue("options/bgcolor",c.name());qvApp->getSettingsManager().loadSettings();}});view->addStretch();
     auto processing=page("▧  영상 처리","영상 처리");toggle(processing,"부드러운 이미지 표시","options/filteringenabled",true);toggle(processing,"고품질 축소","options/scalingenabled",true);select(processing,"색상 프로파일 변환","options/colorspaceconversion",{"변환 안함","모니터 프로파일","sRGB","Display P3"},1);select(processing,"다음 이미지 미리 읽기","options/preloadingmode",{"사용 안함","기본 · 최대 250 MiB 캐시","확장 · 최대 약 2 GiB 캐시"},1);toggle(processing,"색상 반전 (정지 이미지)","nest/effects/invert",false);toggle(processing,"흑백 (정지 이미지)","nest/effects/grayscale",false);toggle(processing,"세피아 (정지 이미지)","nest/effects/sepia",false);processing->addStretch();
-    auto extensions=page("확장자","지원 이미지 확장자");auto formats=new QLabel(qvApp->getFileExtensionList().join("  "),dialog);formats->setWordWrap(true);extensions->addWidget(formats);auto limitation=new QLabel("RAW·PSD·HEIC는 macOS ImageIO 디코더 지원 범위에 따라 달라집니다.\nHDR 출력과 CLIP 전용 디코더는 이 빌드에 포함되지 않습니다.\n파일 연결은 Finder → 정보 가져오기 → 다음으로 열기에서 지정할 수 있습니다.",dialog);limitation->setWordWrap(true);extensions->addWidget(limitation);extensions->addStretch();
+    auto extensions=page("확장자","지원 이미지 확장자");auto formats=new QLabel(qvApp->getFileExtensionList().join("  "),dialog);formats->setWordWrap(true);extensions->addWidget(formats);
+#ifdef Q_OS_MACOS
+    const QString formatHelp = "RAW·PSD·HEIC는 macOS ImageIO 디코더 지원 범위에 따라 달라집니다.\n파일 연결은 Finder → 정보 가져오기 → 다음으로 열기에서 지정할 수 있습니다.";
+#else
+    const QString formatHelp = "RAW는 LibRaw로 읽습니다. PSD·HEIC·AVIF 등은 설치된 Qt 이미지 플러그인에 따라 지원 범위가 달라집니다.\n파일 연결은 운영체제의 기본 앱 설정에서 지정할 수 있습니다.\nLinux Wayland에서 모니터 프로파일을 읽을 수 없으면 원본 색상 또는 지정한 sRGB/Display P3 설정을 사용합니다.";
+#endif
+    auto limitation=new QLabel(formatHelp+"\nHDR 출력과 CLIP 전용 디코더는 이 빌드에 포함되지 않습니다.",dialog);limitation->setWordWrap(true);extensions->addWidget(limitation);extensions->addStretch();
     auto keyboard=page("키보드","키보드 설정");auto table=new QTableWidget(dialog);table->setColumnCount(2);table->setHorizontalHeaderLabels({"기능","기본 단축키"});table->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);table->horizontalHeader()->setSectionResizeMode(1,QHeaderView::ResizeToContents);table->verticalHeader()->hide();keyboard->addWidget(table,1);
     struct KeyRow {QString settingsKey;QString actionKey;QString custom;QKeySequenceEdit *edit;QKeySequence original;};auto keys=std::make_shared<QList<KeyRow>>();
     auto keyRow=[&](const QString &name,const QString &settingsKey,const QString &actionKey,const QString &custom,const QKeySequence &key){int row=table->rowCount();table->insertRow(row);auto label=new QTableWidgetItem(name);label->setFlags(Qt::ItemIsEnabled);table->setItem(row,0,label);auto edit=new QKeySequenceEdit(key,table);table->setCellWidget(row,1,edit);keys->append({settingsKey,actionKey,custom,edit,key});};
@@ -40,5 +47,6 @@ void showNestSettings(QWidget *parent) {
         for(auto widget:QApplication::topLevelWidgets())if(auto window=qobject_cast<MainWindow *>(widget))if(auto view=window->findChild<QVGraphicsView *>())view->refreshFileList();
         dialog->accept();
     });
+    for (auto label : dialog->findChildren<QLabel *>()) label->setText(NestPlatform::shortcutLabel(label->text()));
     dialog->show();
 }

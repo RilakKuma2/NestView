@@ -6,6 +6,7 @@
 #include "nestsettings.h"
 #include "nestreadingview.h"
 #include "nestmedia.h"
+#include "nestupdate.h"
 #include "nestthumbnails.h"
 #include "nestbackgroundactivity.h"
 #include <archive.h>
@@ -29,6 +30,7 @@ private slots:
     void testUpdaterIsOfflineOutsideAppBundle();
     void testClonedActionsUntracked();
     void testDefaultShortcutProfile();
+    void testPortableReleasePolicy();
     void testNaturalNavigationAndReading();
     void testNativeDecoder();
     void testArchiveAndTraversal();
@@ -63,11 +65,19 @@ ActionManagerTests::~ActionManagerTests() { }
 
 void ActionManagerTests::testUpdaterIsOfflineOutsideAppBundle()
 {
+#ifndef NEST_PORTABLE_UPDATER
     QVERIFY(!PhotoUpdater::configured());
     PhotoUpdater::start();
     QVERIFY(!PhotoUpdater::automaticallyChecks());
     PhotoUpdater::setAutomaticallyChecks(true);
     QVERIFY(!PhotoUpdater::automaticallyChecks());
+#else
+    QVERIFY(PhotoUpdater::configured());
+    const bool previous = PhotoUpdater::automaticallyChecks();
+    PhotoUpdater::setAutomaticallyChecks(!previous);
+    QCOMPARE(PhotoUpdater::automaticallyChecks(), !previous);
+    PhotoUpdater::setAutomaticallyChecks(previous);
+#endif
 }
 
 void ActionManagerTests::testClonedActionsUntracked()
@@ -122,6 +132,17 @@ void ActionManagerTests::testNaturalNavigationAndReading() {
     shell->setMode(7);QCOMPARE(reader->readingMode(),7);
     shell->setMode(1);QVERIFY(!reader->isVisible());
     window.close();
+}
+void ActionManagerTests::testPortableReleasePolicy() {
+    QVERIFY(NestUpdate::newerVersion("v0.10", "0.9"));
+    QVERIFY(!NestUpdate::newerVersion("v0.1", "0.1"));
+    QVERIFY(!NestUpdate::newerVersion("v0.2-beta", "0.1"));
+    QVERIFY(!NestUpdate::newerVersion("invalid", "0.1"));
+    const QString repository = "RilakKuma2/NestView";
+    QVERIFY(NestUpdate::validAssetURL(QUrl("https://github.com/RilakKuma2/NestView/releases/download/v0.2/NestView.zip"), repository));
+    QVERIFY(!NestUpdate::validAssetURL(QUrl("http://github.com/RilakKuma2/NestView/releases/download/v0.2/app.zip"), repository));
+    QVERIFY(!NestUpdate::validAssetURL(QUrl("https://github.com/other/NestView/releases/download/v0.2/app.zip"), repository));
+    QVERIFY(!NestUpdate::validAssetURL(QUrl("https://github.com.example.com/RilakKuma2/NestView/releases/download/v0.2/app.zip"), repository));
 }
 void ActionManagerTests::testNativeDecoder() {
     QTemporaryDir dir;QImage image(320,200,QImage::Format_RGB32);image.fill(Qt::green);
@@ -199,23 +220,33 @@ void ActionManagerTests::testReferenceChrome() {
     auto toolbar=window.findChild<QToolBar *>("workspaceToolbar");QVERIFY(toolbar);QCOMPARE(toolbar->height(),36);
     auto updateButton=toolbar->findChild<QToolButton *>("checkForUpdatesButton");
     QVERIFY(!updateButton);
+#ifdef Q_OS_MACOS
     QVERIFY(window.menuBar()->isNativeMenuBar());
+#else
+    QVERIFY(!window.menuBar()->isNativeMenuBar());
+#endif
     QVERIFY(window.menuBar()->actions().size() >= 7);
     QVERIFY(!window.menuBar()->findChild<QAction *>("checkForUpdatesAction"));
     auto &manager=qvApp->getActionManager();
     auto updateAction=manager.findChild<QAction *>("checkForUpdatesAction");
     QVERIFY(updateAction);QVERIFY(updateAction->isVisible());QVERIFY(updateAction->isEnabled());
     QCOMPARE(updateAction->menuRole(),QAction::ApplicationSpecificRole);
+#ifdef Q_OS_MACOS
     QTRY_COMPARE(nativeApplicationUpdateItemCount(),1);
+#endif
     {
         MainWindow secondWindow;secondWindow.setAttribute(Qt::WA_DeleteOnClose,false);secondWindow.show();
+#ifdef Q_OS_MACOS
         QTRY_COMPARE(nativeApplicationUpdateItemCount(),1);
+#endif
         QCOMPARE(manager.findChildren<QAction *>("checkForUpdatesAction").size(),1);
         QVERIFY(!secondWindow.menuBar()->findChild<QAction *>("checkForUpdatesAction"));
         secondWindow.close();
     }
     window.activateWindow();
+#ifdef Q_OS_MACOS
     QTRY_COMPARE(nativeApplicationUpdateItemCount(),1);
+#endif
     QCOMPARE(manager.findChildren<QAction *>("checkForUpdatesAction").size(),1);
     auto floating=window.findChild<QFrame *>("floatingControls");QVERIFY(floating);QCOMPARE(floating->height(),46);
     QTRY_VERIFY(floating->geometry().bottom()<window.height());
